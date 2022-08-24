@@ -4,60 +4,46 @@ import { CreateUserUseCase } from "../../../users/useCases/createUser/CreateUser
 import { OperationType } from "../../entities/Statement";
 import { InMemoryStatementsRepository } from "../../repositories/in-memory/InMemoryStatementsRepository";
 import { IStatementsRepository } from "../../repositories/IStatementsRepository";
-import { CreateStatementUseCase } from "./CreateStatementUseCase";
-
-
+import { CreateStatementUseCase } from "../createStatement/CreateStatementUseCase";
+import { GetStatementOperationUseCase } from "./GetStatementOperationUseCase";
 
 let createUserUseCase: CreateUserUseCase;
 let inMemoryStatementsRepository: IStatementsRepository;
 let inMemoryUsersRepository: IUsersRepository;
 let createStatementUseCase: CreateStatementUseCase;
+let getStatementOperationUseCase: GetStatementOperationUseCase;
 
-
-describe('Create statement', () => {
+describe('Get statement operation', () => {
   beforeEach(() => {
     inMemoryStatementsRepository = new InMemoryStatementsRepository();
     inMemoryUsersRepository = new InMemoryUsersRepository();
     createUserUseCase = new CreateUserUseCase(inMemoryUsersRepository);
     createStatementUseCase = new CreateStatementUseCase(inMemoryUsersRepository, inMemoryStatementsRepository);
+    getStatementOperationUseCase = new GetStatementOperationUseCase(inMemoryUsersRepository, inMemoryStatementsRepository);
   })
-  it('should be able to crete a new deposit ', async () => {
+
+  it('should be able to get operation', async () => {
     const user = await createUserUseCase.execute({
-      name: "user",
-      email: "user@example.com",
-      password: "0000"
-    })
+      name: 'username',
+      email: 'user@mail.com',
+      password: 'user123'
+    });
+
 
     const statement = await createStatementUseCase.execute({
       user_id: user.id as string,
       type: OperationType.DEPOSIT,
       amount: 100,
-      description: 'desposit'
-    })
+      description: 'deposit'
+    });
 
-    expect(statement).toHaveProperty('id')
-  })
-  it('should be able to create a new withdraw with a valid value', async () => {
-    const user = await createUserUseCase.execute({
-      name: "user",
-      email: "user@test.com",
-      password: "0000"
-    })
-
-    await createStatementUseCase.execute({
+    const operation = await getStatementOperationUseCase.execute({
       user_id: user.id as string,
-      type: OperationType.DEPOSIT,
-      amount: 100,
-      description: 'desposit'
+      statement_id: statement.id as string
     })
+    expect(operation).toHaveProperty('id')
+    expect(operation.type).toEqual('deposit');
+    expect(operation.amount).toEqual(statement.amount)
 
-    const statementWithdraw = await createStatementUseCase.execute({
-      user_id: user.id as string,
-      type: OperationType.WITHDRAW,
-      amount: 100,
-      description: 'withdraw'
-    })
-    expect(statementWithdraw).toHaveProperty('id')
   })
-
 })
